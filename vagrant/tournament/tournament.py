@@ -12,42 +12,69 @@ def connect():
 
 
 def deleteMatches():
-    """Remove all the match records from the database."""
+	"""Remove all the match records from the database."""
+	DB = connect()
+	c = DB.cursor()
+	c.execute("delete from matches;")
+	DB.commit()
+	DB.close()
 
 
 def deletePlayers():
-    """Remove all the player records from the database."""
+	"""Remove all the player records from the database."""
+	DB = connect()
+	c = DB.cursor()
+	c.execute("delete from players;")
+	DB.commit()
+	DB.close()
 
 
 def countPlayers():
-    """Returns the number of players currently registered."""
+	"""Returns the number of players currently registered."""
+	DB = connect()
+	c = DB.cursor()
+	c.execute("select coalesce((select count(id) as num from players),0);")
+	result = c.fetchone()
+	DB.commit()
+	DB.close()
+	return result[0]
 
 
 def registerPlayer(name):
-    """Adds a player to the tournament database.
+	"""Adds a player to the tournament database.
   
-    The database assigns a unique serial id number for the player.  (This
-    should be handled by your SQL database schema, not in your Python code.)
+	The database assigns a unique serial id number for the player.  (This
+	should be handled by your SQL database schema, not in your Python code.)
   
-    Args:
-      name: the player's full name (need not be unique).
-    """
+	Args:
+	name: the player's full name (need not be unique).
+	"""
+	DB = connect()
+	c = DB.cursor()
+	c.execute("insert into players (name) values (%s)", (name,))
+	DB.commit()
+	DB.close()
 
 
 def playerStandings():
-    """Returns a list of the players and their win records, sorted by wins.
+	"""Returns a list of the players and their win records, sorted by wins.
 
-    The first entry in the list should be the player in first place, or a player
-    tied for first place if there is currently a tie.
+	The first entry in the list should be the player in first place, or a player
+	tied for first place if there is currently a tie.
 
-    Returns:
-      A list of tuples, each of which contains (id, name, wins, matches):
+	Returns:
+	A list of tuples, each of which contains (id, name, wins, matches):
         id: the player's unique id (assigned by the database)
         name: the player's full name (as registered)
         wins: the number of matches the player has won
         matches: the number of matches the player has played
-    """
-
+	"""
+	DB = connect()
+	c = DB.cursor()
+	c.execute("select players.id, players.name, cnt(*) as wins from players, matches \
+	as wins where players.id = matches.left_id and players.id = matches.right_id")
+	DB.commit()
+	DB.close()
 
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
