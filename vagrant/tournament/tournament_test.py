@@ -118,7 +118,7 @@ def testPairings():
 
 if __name__ == '__main__':
     testCount()
-    #testStandingsBeforeMatches()
-    #testReportMatches()
+    testStandingsBeforeMatches()
+    testReportMatches()
     #testPairings()
     print "Success!  All tests pass!"

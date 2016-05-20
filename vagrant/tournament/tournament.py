@@ -71,18 +71,30 @@ def playerStandings():
 	"""
 	DB = connect()
 	c = DB.cursor()
-	c.execute("select players.id, players.name, cnt(*) as wins from players, matches \
-	as wins where players.id = matches.left_id and players.id = matches.right_id")
-	DB.commit()
+	c.execute("select subq1.id, players.name, wins, matches from \
+	(select id, count(winner) as wins from players left join matches on id = winner group by id) as subq1, \
+	(select id, (count(left_id) + count(right_id))/2 as matches from players left join matches on id = left_id or id = right_id group by id) as subq2, \
+	players where subq1.id = subq2.id and subq1.id = players.id order by wins desc;")
+	results = c.fetchall()
 	DB.close()
+	return results;
 
 def reportMatch(winner, loser):
-    """Records the outcome of a single match between two players.
-
-    Args:
-      winner:  the id number of the player who won
-      loser:  the id number of the player who lost
-    """
+	"""Records the outcome of a single match between two players.
+	
+	Args:
+	winner:  the id number of the player who won
+	loser:  the id number of the player who lost
+	"""
+	
+	DB = connect()
+	c = DB.cursor()
+	if winner > loser:
+		c.execute("insert into matches (left_id, right_id, winner) values(%s, %s, %s)", (loser, winner, winner,))
+	else:
+		c.execute("insert into matches (left_id, right_id, winner) values(%s, %s, %s)", (winner, loser, winner,))
+	DB.commit()
+	DB.close()
  
  
 def swissPairings():
