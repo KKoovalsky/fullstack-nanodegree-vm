@@ -10,6 +10,8 @@ pip install redis
 pip install passlib
 pip install itsdangerous
 pip install flask-httpauth
+pip install numpy
+pip install math
 su postgres -c 'createuser -dRS vagrant'
 su vagrant -c 'createdb'
 su vagrant -c 'createdb forum'

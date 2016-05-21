@@ -4,7 +4,8 @@
 #
 
 import psycopg2
-
+import numpy
+import math
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
@@ -98,19 +99,57 @@ def reportMatch(winner, loser):
  
  
 def swissPairings():
-    """Returns a list of pairs of players for the next round of a match.
+	"""Returns a list of pairs of players for the next round of a match.
   
-    Assuming that there are an even number of players registered, each player
-    appears exactly once in the pairings.  Each player is paired with another
-    player with an equal or nearly-equal win record, that is, a player adjacent
-    to him or her in the standings.
+	Assuming that there are an even number of players registered, each player
+	appears exactly once in the pairings.  Each player is paired with another
+	player with an equal or nearly-equal win record, that is, a player adjacent
+	to him or her in the standings.
   
-    Returns:
-      A list of tuples, each of which contains (id1, name1, id2, name2)
-        id1: the first player's unique id
-        name1: the first player's name
-        id2: the second player's unique id
-        name2: the second player's name
-    """
+	Returns:
+		A list of tuples, each of which contains (id1, name1, id2, name2)
+		id1: the first player's unique id
+		name1: the first player's name
+		id2: the second player's unique id
+		name2: the second player's name
+	"""
+	i = 0
+	j = 1
+	k = 0
+	left = []
+	right = []
+	matches_nr = []
+	DB = connect()
+	c = DB.cursor()
+	pStand = playerStandings()
+	dim = numpy.shape(pStand)
+	if dim[0] % 2 == 1:
+		try:
+			c.execute("insert into players (id, name) values (0, 'bye')")
+			c.commit()
+		except RuntimeError:
+			pass
+	matches_nr = int(math.ceil(dim[0]/2))
+	pMatches = [(0, "", 0, "")] * matches_nr
+	while k < matches_nr:
+		if pStand[0][0] > pStand[j][0]:
+			left = pStand[j]
+			right = pStand[0]
+		else:
+			left = pStand[0]
+			right = pStand[j]
+		c.execute("select * from matches where left_id = %s and right_id = %s", (left[0], right[0],))
+		if c.rowcount == 0:
+			pMatches[i] = [left[0], left[1], right[0],right[1]]
+			numpy.delete(pStand, 0, 0)
+			numpy.delete(pStand, j - 1, 0)
+			i = i + 1
+			j = 1
+		else:
+			j = j + 1
+		k = k + 1
+	DB.close()
+	return pMatches
+	
 
 
